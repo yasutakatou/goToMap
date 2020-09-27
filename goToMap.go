@@ -3,7 +3,7 @@
  *
  * @author    yasutakatou
  * @copyright 2020 yasutakatou
- * @license   3-clause BSD License
+ * @license   BSD-2-Clause License
  */
 package main
 
