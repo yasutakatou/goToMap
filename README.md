@@ -10,12 +10,12 @@ Google マップで宝探しするゲーム (Go言語製サーバー)
  - プレイヤー同士でメッセージをやりとりしたり、書置きを読んだりできます
 
 ### ・Windows、Linux、Rasbian対応のGolang製Websocketサーバー
-<a href="https://github.com/yasutakatou/goToMap"><img src="https://github-link-card.s3.ap-northeast-1.amazonaws.com/yasutakatou/goToMap.png" width="460px"></a>
+<a href="https://github.com/yasutakatou/goToMap/releases"><img src="https://github-link-card.s3.ap-northeast-1.amazonaws.com/yasutakatou/goToMap.png" width="460px"></a>
 
 サーバーとするPCで動かしてください。
 
 ### ・Chrome拡張 (Chromiumも対応)
-<a href="https://github.com/yasutakatou/goToMapExt"><img src="https://github-link-card.s3.ap-northeast-1.amazonaws.com/yasutakatou/goToMapExt.png" width="460px"></a>
+<a href="https://github.com/yasutakatou/goToMapExt/releases"><img src="https://github-link-card.s3.ap-northeast-1.amazonaws.com/yasutakatou/goToMapExt.png" width="460px"></a>
 
 ゲームする端末上のChrome(と互換ブラウザ)で動かしてください。サーバーと同居できます。
 
