@@ -54,7 +54,9 @@ https://www.google.co.jp/maps/@35.6613982,139.7001959,3a,75y,131.45h,104.53t/dat
 # きどうほうほう：
 
 　**Go言語のWebsocketサーバーを起動**します。**同フォルダにコンフィグ置いて実行**すればOK。
-　次にChrome拡張インストールします。二人以上のプレイヤーの場合は**拡張のアイコン**を開いて**「接続サーバー」欄にサーバーのIP:Portを指定**してください。保存して拡張を**再起動**します。
+　次にChrome拡張インストールします。<br>
+ 二人以上のプレイヤーの場合は**拡張のアイコン**を開いて**「接続サーバー」欄にサーバーのIP:Portを指定**してください。<br>
+ 保存して拡張を**再起動**します。
 
 ![1.png](https://github.com/yasutakatou/goToMap/blob/pic/1.png)
 
@@ -74,7 +76,7 @@ https://www.google.co.jp/maps/@35.6613982,139.7001959,3a,75y,131.45h,104.53t/dat
 
 任意の場所で**画像**も出せます
 
-![5.png](https://github.com/yasutakatou/goToMap/blob/pic/51.png)
+![5.png](https://github.com/yasutakatou/goToMap/blob/pic/5.png)
 
 SNSぽく、**参加者全員にメッセージ**を表示できます。
 
