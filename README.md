@@ -87,3 +87,11 @@ SNSぽく、**参加者全員にメッセージ**を表示できます。
 **特定の場所に書置き**ができます。メッセージ通知を後から追加できる機能です
 
 ![8.png](https://github.com/yasutakatou/goToMap/blob/pic/8.png)
+
+# LICENSE
+
+BSD-2-Clause License
+
+# Contributors
+
+- [yasutakatou](https://github.com/yasutakatou)
