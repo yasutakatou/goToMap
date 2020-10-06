@@ -28,6 +28,7 @@ var (
 	Debug                bool
 	games                gameData
 	actions              []actionData
+	plays                []playersData
 	players              int
 	actClient            []int
 	ActiveClients        = make(map[ClientConn]int)
@@ -39,6 +40,13 @@ type gameData struct {
 	PLAYER []string
 	GOAL   []string
 	RESULT []string
+}
+
+type playersData struct {
+	Name   string
+	IP     string
+	Avater string
+	Pos    string
 }
 
 type actionData struct {
@@ -294,13 +302,96 @@ func sendCast(winIp, mess string) {
 	}
 }
 
+func sendTo(winIp, name, mess string) {
+	ActiveClientsRWMutex.RLock()
+	defer ActiveClientsRWMutex.RUnlock()
+
+	strs := nameToIP(name)
+	fmt.Println(strs)
+
+	for client, _ := range ActiveClients {
+		cIp := fmt.Sprintf("%s", client.clientIP)
+		fmt.Println(cIp)
+		if winIp != cIp && strs == cIp {
+			if err := client.websocket.WriteJSON(responseData{Command: "message", Data: IPToName(winIp) + ">\n" + mess}); err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+}
+
+func nameCheck(strs string) bool {
+	for i := 0; i < len(plays); i++ {
+		if plays[i].Name == strs {
+			return false
+		}
+	}
+	return true
+}
+
+func userlist(name string) string {
+	strs := ""
+	for i := 0; i < len(plays); i++ {
+		if plays[i].Name != name {
+			strs = strs + plays[i].Name + ","
+		}
+	}
+	return strs
+}
+
+func nameToIP(strs string) string {
+	for i := 0; i < len(plays); i++ {
+		if strs == plays[i].Name {
+			return plays[i].IP
+		}
+	}
+	return ""
+}
+
+func IPToName(strs string) string {
+	for i := 0; i < len(plays); i++ {
+		if strs == plays[i].IP {
+			return plays[i].Name
+		}
+	}
+	return ""
+}
+
+func delPlayersArray(strs string) {
+	for i := 0; i < len(plays); i++ {
+		if strs == plays[i].Name {
+			plays = unset(plays, i)
+		}
+	}
+}
+
+func unset(s []playersData, i int) []playersData {
+	if i >= len(s) {
+		return s
+	}
+	return append(s[:i], s[i+1:]...)
+}
+
+func logoutClient(targ string) {
+	strs := nameToIP(targ)
+	for client, _ := range ActiveClients {
+		if IPtoString(client) == strs {
+			deleteClient(client)
+			err := client.websocket.Close()
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+}
+
+func IPtoString(cc ClientConn) string {
+	string := fmt.Sprintf("%s", cc.clientIP)
+	return string
+}
+
 func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 	var endFlag = false
-
-	if len(games.PLAYER) < players {
-		fmt.Printf("Player Over!: %s \n", req.RemoteAddr)
-		return
-	}
 
 	conn, err := upgrader.Upgrade(wr, req, nil)
 	if err != nil {
@@ -329,16 +420,47 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 		}
 
 		switch m.Command {
+		case "logout":
+			logoutClient(m.Data)
+			if players > 0 {
+				players = players - 1
+			}
+		case "users":
+			strs := userlist(m.Data)
+			if len(strs) > 4 {
+				if err = conn.WriteJSON(responseData{Command: "list", Data: userlist(m.Data)}); err != nil {
+					fmt.Println(err)
+				}
+			}
+		case "to":
+			strs := strings.Split(m.Data, ":")
+			sendTo(req.RemoteAddr, strs[0], strs[1])
 		case "cast":
 			sendCast(req.RemoteAddr, m.Data)
 		case "crumb":
 			strs := strings.Split(m.Data, ":")
 			actions = append(actions, actionData{ADDRESS: strs[0], DATA: strs[1]})
 		case "start":
-			if err = conn.WriteJSON(responseData{Command: "goto", Data: games.PLAYER[players]}); err != nil {
-				fmt.Println(err)
+			if nameCheck(m.Data) == true {
+				plays = append(plays, playersData{Name: m.Data, IP: req.RemoteAddr, Avater: "", Pos: ""})
+				fmt.Println(plays)
+				if len(games.PLAYER) < players {
+					if err = conn.WriteJSON(responseData{Command: "error", Data: "定員オーバーです"}); err != nil {
+						fmt.Println(err)
+					}
+					deleteClient(sockCli)
+				} else {
+					if err = conn.WriteJSON(responseData{Command: "goto", Data: games.PLAYER[players]}); err != nil {
+						fmt.Println(err)
+					}
+					players = players + 1
+				}
+			} else {
+				if err = conn.WriteJSON(responseData{Command: "error", Data: "その名前もう居ますよ"}); err != nil {
+					fmt.Println(err)
+				}
+				deleteClient(sockCli)
 			}
-			players = players + 1
 		case "move":
 			checks := goalCheck(m.Data)
 			if checks > 0 && endFlag == false {
