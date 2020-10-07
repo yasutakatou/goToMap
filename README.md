@@ -19,6 +19,24 @@ Google マップで宝探しするゲーム (Go言語製サーバー)
 
 ゲームする端末上のChrome(と互換ブラウザ)で動かしてください。サーバーと同居できます。
 
+# v0.2
+
+## ログイン名とメッセージをログイン名宛てに遅れる機能を追加しました
+
+![2-1.png](https://github.com/yasutakatou/goToMap/blob/pic/2-1.png)
+
+こんなかんじに拡張機能からサーバーにユーザー名を決めてログインします。（旧版はChrome拡張起動時に自動ログイン）
+
+![2-2.png](https://github.com/yasutakatou/goToMap/blob/pic/2-2.png)
+
+メッセージ送信時に自分以外のユーザー名が一覧で表示されるようになりました。
+
+![2-3.png](https://github.com/yasutakatou/goToMap/blob/pic/2-3.png)
+
+送信先では送り元のユーザー名も表示されます。
+
+## 注意！ Chrome拡張とサーバを同じ版数に揃えないと動作しませんので注意
+
 # じゅんび:
 
 Googleマップで遊びたい街を開いてください。
