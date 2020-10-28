@@ -1,8 +1,0 @@
-github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=
-github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/mattn/go-runewidth v0.0.9 h1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=
-github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
-github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1 h1:lh3PyZvY+B9nFliSGTn5uFuqQQJGuNrD0MLCokv09ag=
-github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
-gopkg.in/ini.v1 v1.61.0 h1:LBCdW4FmFYL4s/vDZD1RQYX7oAR6IjujCYgMdbHBR10=
-gopkg.in/ini.v1 v1.61.0/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=

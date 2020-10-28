@@ -46,7 +46,9 @@ type playersData struct {
 	Name   string
 	IP     string
 	Avater string
-	Pos    string
+	PosX   float64
+	PosY   float64
+	Angle  int
 }
 
 type actionData struct {
@@ -442,7 +444,7 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 			actions = append(actions, actionData{ADDRESS: strs[0], DATA: strs[1]})
 		case "start":
 			if nameCheck(m.Data) == true {
-				plays = append(plays, playersData{Name: m.Data, IP: req.RemoteAddr, Avater: "", Pos: ""})
+				plays = append(plays, playersData{Name: m.Data, IP: req.RemoteAddr, Avater: "", PosX: 0, PosY: 0, Angle: 0})
 				fmt.Println(plays)
 				if len(games.PLAYER) < players {
 					if err = conn.WriteJSON(responseData{Command: "error", Data: "定員オーバーです"}); err != nil {
@@ -484,7 +486,26 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 				if act > 0 && endFlag == false {
 					sendAct(req.RemoteAddr, act)
 				}
+				
+				
 			}
+		}
+	}
+}
+
+func updateStat(cIp, strs string) {
+	for i := 0; i < len(plays); i++ {
+		if cIp == plays.Ip[i] {
+			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
+			stra := strings.Split(strs, "/")
+			strb := strings.Split(stra[4], ",")
+			
+			strc = strings.Replace(str, "@", "", -1)
+			strd = strings.Replace(str, "h", "", -1)
+
+			plays.PosX =
+			plays.PoxY =
+			plays.Angle =
 		}
 	}
 }
