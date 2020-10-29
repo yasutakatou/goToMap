@@ -16,10 +16,10 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"strconv"
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/ini.v1"
@@ -119,6 +119,9 @@ func main() {
 			}
 		}()
 	}
+
+	//https://www.google.co.jp/maps/@35.6609576,139.7008684,3a,75y,43.91h,92.5t/data=!3m6!1e1!3m4!1s-b8q-XZc_J3cmM3BI_yPTw!2e0!7i16384!8i8192
+	plays = append(plays, playersData{Name: "ava", IP: "192.168.0.220:80801", Avater: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Cynops_pyrrhogaster.jpg/250px-Cynops_pyrrhogaster.jpg", PosX: 35.6609576, PosY: 139.7008684, Angle: 43.91})
 
 	for {
 		_, ip, err := getIFandIP()
@@ -488,8 +491,10 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 					if act > 0 && endFlag == false {
 						sendAct(req.RemoteAddr, act)
 					}
-					updateStat(req.RemoteAddr,m.Data)	
+					updateStat(req.RemoteAddr, m.Data)
 				}
+				fmt.Printf("dis: ")
+				fmt.Println(disAvater(req.RemoteAddr))
 			}
 		}
 	}
@@ -500,7 +505,7 @@ func updateStat(cIp, strs string) {
 		if cIp == plays[i].IP {
 			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
 			stra := strings.Split(strs, "/")
-			strb := strings.Split(stra[4], ",")	
+			strb := strings.Split(stra[4], ",")
 			strc := strings.Replace(strb[0], "@", "", -1)
 			strd := strings.Replace(strb[4], "h", "", -1)
 
@@ -523,10 +528,10 @@ func updateStat(cIp, strs string) {
 	}
 }
 
-func intPlays(cIp string) (int) {
+func intPlays(cIp string) int {
 	for i := 0; i < len(plays); i++ {
 		if cIp == plays[i].IP {
-			return i+1
+			return i + 1
 		}
 	}
 	return 0
@@ -538,25 +543,27 @@ func disAvater(cIp string) (string, string) {
 
 	me := intPlays(cIp)
 	if me == 0 {
-		return "",""
+		return "", ""
 	}
 
+	fmt.Printf("me: ")
+
+	fmt.Println(me)
 	me = me - 1
 
 	for i := 0; i < len(plays); i++ {
 		if me != i {
-			if plays[me].PosX > plays[i].PosX && plays[me].PosX < plays[i].PosX + xThreshold {
-				if plays[me].PosY > plays[i].PosY && plays[me].PosY > plays[i].PosY + yThreshold{
-					if plays[me].Angle > 180 {
-						if plays[me].Angle > plays[i].Angle && plays[me].Angle < plays[i].Angle + 360 {
-							return plays[i].Name, plays[i].Avater
-						}
-					} else if plays[me].Angle > plays[i].Angle && plays[me].Angle < plays[i].Angle + 180 {
+			if plays[me].PosX >= plays[i].PosX && plays[me].PosX <= plays[i].PosX+xThreshold {
+				fmt.Println("X pass")
+				if plays[me].PosY >= plays[i].PosY && plays[me].PosY <= plays[i].PosY+yThreshold {
+					fmt.Println("Y pass")
+					if plays[me].Angle >= plays[i].Angle && plays[me].Angle <= plays[i].Angle+180 {
+						fmt.Println("A pass")
 						return plays[i].Name, plays[i].Avater
 					}
 				}
 			}
 		}
 	}
-	return "",""
+	return "", ""
 }
