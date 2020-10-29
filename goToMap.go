@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"gopkg.in/ini.v1"
@@ -48,7 +49,7 @@ type playersData struct {
 	Avater string
 	PosX   float64
 	PosY   float64
-	Angle  int
+	Angle  float64
 }
 
 type actionData struct {
@@ -443,9 +444,9 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 			strs := strings.Split(m.Data, ":")
 			actions = append(actions, actionData{ADDRESS: strs[0], DATA: strs[1]})
 		case "start":
-			if nameCheck(m.Data) == true {
-				plays = append(plays, playersData{Name: m.Data, IP: req.RemoteAddr, Avater: "", PosX: 0, PosY: 0, Angle: 0})
-				fmt.Println(plays)
+			strs := strings.Split(m.Data, ";")
+			if nameCheck(strs[0]) == true {
+				plays = append(plays, playersData{Name: strs[0], IP: req.RemoteAddr, Avater: strs[1], PosX: 0, PosY: 0, Angle: 0})
 				if len(games.PLAYER) < players {
 					if err = conn.WriteJSON(responseData{Command: "error", Data: "定員オーバーです"}); err != nil {
 						fmt.Println(err)
@@ -482,12 +483,13 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 					winOrLose(req.RemoteAddr)
 				}
 			} else {
-				act := actCheck(m.Data)
-				if act > 0 && endFlag == false {
-					sendAct(req.RemoteAddr, act)
+				if len(m.Data) > 0 {
+					act := actCheck(m.Data)
+					if act > 0 && endFlag == false {
+						sendAct(req.RemoteAddr, act)
+					}
+					updateStat(req.RemoteAddr,m.Data)	
 				}
-				
-				
 			}
 		}
 	}
@@ -495,17 +497,56 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 
 func updateStat(cIp, strs string) {
 	for i := 0; i < len(plays); i++ {
-		if cIp == plays.Ip[i] {
+		if cIp == plays[i].IP {
 			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
 			stra := strings.Split(strs, "/")
-			strb := strings.Split(stra[4], ",")
-			
-			strc = strings.Replace(str, "@", "", -1)
-			strd = strings.Replace(str, "h", "", -1)
+			strb := strings.Split(stra[4], ",")	
+			strc := strings.Replace(strb[0], "@", "", -1)
+			strd := strings.Replace(strb[4], "h", "", -1)
 
-			plays.PosX =
-			plays.PoxY =
-			plays.Angle =
+			fX, err := strconv.ParseFloat(strc, 64)
+			if err == nil {
+				plays[i].PosX = fX
+			}
+
+			fY, err := strconv.ParseFloat(strb[1], 64)
+			if err == nil {
+				plays[i].PosY = fY
+			}
+
+			fA, err := strconv.ParseFloat(strd, 64)
+			if err == nil {
+				plays[i].Angle = fA
+			}
+			fmt.Println(plays[i])
+		}
+	}
+}
+
+func disAvater(cIp, strs string) (string, string) {}
+	for i := 0; i < len(plays); i++ {
+		if cIp == plays[i].IP {
+			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
+			stra := strings.Split(strs, "/")
+			strb := strings.Split(stra[4], ",")	
+			strc := strings.Replace(strb[0], "@", "", -1)
+			strd := strings.Replace(strb[4], "h", "", -1)
+
+			fX, err := strconv.ParseFloat(strc, 64)
+			if err == nil {
+				plays[i].PosX = fX
+			}
+
+			fY, err := strconv.ParseFloat(strb[1], 64)
+			if err == nil {
+				plays[i].PosY = fY
+			}
+
+			fA, err := strconv.ParseFloat(strd, 64)
+			if err == nil {
+				plays[i].Angle = fA
+			}
+			fmt.Println(plays[i])
 		}
 	}
 }
