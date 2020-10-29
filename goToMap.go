@@ -523,30 +523,40 @@ func updateStat(cIp, strs string) {
 	}
 }
 
-func disAvater(cIp, strs string) (string, string) {}
+func intPlays(cIp string) (int) {
 	for i := 0; i < len(plays); i++ {
 		if cIp == plays[i].IP {
-			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
-			stra := strings.Split(strs, "/")
-			strb := strings.Split(stra[4], ",")	
-			strc := strings.Replace(strb[0], "@", "", -1)
-			strd := strings.Replace(strb[4], "h", "", -1)
-
-			fX, err := strconv.ParseFloat(strc, 64)
-			if err == nil {
-				plays[i].PosX = fX
-			}
-
-			fY, err := strconv.ParseFloat(strb[1], 64)
-			if err == nil {
-				plays[i].PosY = fY
-			}
-
-			fA, err := strconv.ParseFloat(strd, 64)
-			if err == nil {
-				plays[i].Angle = fA
-			}
-			fmt.Println(plays[i])
+			return i+1
 		}
 	}
+	return 0
+}
+
+func disAvater(cIp string) (string, string) {
+	xThreshold := 0.001
+	yThreshold := 0.00005
+
+	me := intPlays(cIp)
+	if me == 0 {
+		return "",""
+	}
+
+	me = me - 1
+
+	for i := 0; i < len(plays); i++ {
+		if me != i {
+			if plays[me].PosX > plays[i].PosX && plays[me].PosX < plays[i].PosX + xThreshold {
+				if plays[me].PosY > plays[i].PosY && plays[me].PosY > plays[i].PosY + yThreshold{
+					if plays[me].Angle > 180 {
+						if plays[me].Angle > plays[i].Angle && plays[me].Angle < plays[i].Angle + 360 {
+							return plays[i].Name, plays[i].Avater
+						}
+					} else if plays[me].Angle > plays[i].Angle && plays[me].Angle < plays[i].Angle + 180 {
+						return plays[i].Name, plays[i].Avater
+					}
+				}
+			}
+		}
+	}
+	return "",""
 }
