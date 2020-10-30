@@ -493,8 +493,14 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 					}
 					updateStat(req.RemoteAddr, m.Data)
 				}
-				fmt.Printf("dis: ")
-				fmt.Println(disAvater(req.RemoteAddr))
+
+				stra, strb := disAvater(req.RemoteAddr)
+				fmt.Println("dis: ", stra, strb)
+				if len(stra) > 0 && len(strb) > 0 {
+					if err = conn.WriteJSON(responseData{Command: "message", Data: "avater;" + stra + ";" + strb}); err != nil {
+						fmt.Println(err)
+					}
+				}
 			}
 		}
 	}
