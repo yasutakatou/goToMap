@@ -31,7 +31,6 @@ var (
 	actions              []actionData
 	plays                []playersData
 	players              int
-	actClient            []int
 	ActiveClients        = make(map[ClientConn]int)
 	ActiveClientsRWMutex sync.RWMutex
 	BUFFERLIMIT          int = 1
@@ -121,7 +120,7 @@ func main() {
 	}
 
 	//https://www.google.co.jp/maps/@35.6609576,139.7008684,3a,75y,43.91h,92.5t/data=!3m6!1e1!3m4!1s-b8q-XZc_J3cmM3BI_yPTw!2e0!7i16384!8i8192
-	plays = append(plays, playersData{Name: "ava", IP: "192.168.0.220:80801", Avater: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Cynops_pyrrhogaster.jpg/250px-Cynops_pyrrhogaster.jpg", PosX: 35.6609576, PosY: 139.7008684, Angle: 43.91})
+	//plays = append(plays, playersData{Name: "ava", IP: "192.168.0.220:80801", Avater: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Cynops_pyrrhogaster.jpg/250px-Cynops_pyrrhogaster.jpg", PosX: 35.6609576, PosY: 139.7008684, Angle: 43.91})
 
 	for {
 		_, ip, err := getIFandIP()
@@ -284,12 +283,6 @@ func sendAct(winIp string, act int) {
 	i := 0
 	for client, _ := range ActiveClients {
 		cIp := fmt.Sprintf("%s", client.clientIP)
-		// if winIp == cIp && actClient[i] != act {
-		// 	if err := client.websocket.WriteJSON(responseData{Command: "message", Data: actions[(act - 1)].DATA}); err != nil {
-		// 		fmt.Println(err)
-		// 	}
-		// 	actClient[i] = act
-		// }
 		if winIp == cIp {
 			if err := client.websocket.WriteJSON(responseData{Command: "message", Data: actions[(act - 1)].DATA}); err != nil {
 				fmt.Println(err)
@@ -318,11 +311,9 @@ func sendTo(winIp, name, mess string) {
 	defer ActiveClientsRWMutex.RUnlock()
 
 	strs := nameToIP(name)
-	fmt.Println(strs)
 
 	for client, _ := range ActiveClients {
 		cIp := fmt.Sprintf("%s", client.clientIP)
-		fmt.Println(cIp)
 		if winIp != cIp && strs == cIp {
 			if err := client.websocket.WriteJSON(responseData{Command: "message", Data: IPToName(winIp) + ">\n" + mess}); err != nil {
 				fmt.Println(err)
@@ -415,7 +406,6 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 
 	client := conn.RemoteAddr()
 	sockCli := ClientConn{conn, client}
-	actClient = append(actClient, 0)
 	addClient(sockCli)
 
 	for {
@@ -493,8 +483,6 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 			} else {
 				if len(m.Data) > 0 {
 					act := actCheck(m.Data)
-					fmt.Printf("act: ")
-					fmt.Println(act)
 					if act > 0 && endFlag == false {
 						sendAct(req.RemoteAddr, act)
 					} else {
@@ -552,7 +540,6 @@ func updateStat(cIp, strs string, defaultFlag bool) {
 			if err == nil {
 				plays[i].Angle = fA
 			}
-			fmt.Println(plays[i])
 		}
 	}
 }
@@ -575,19 +562,13 @@ func disAvater(cIp string) (string, string) {
 		return "", ""
 	}
 
-	fmt.Printf("me: ")
-
-	fmt.Println(me)
 	me = me - 1
 
 	for i := 0; i < len(plays); i++ {
 		if me != i {
 			if plays[me].PosX >= plays[i].PosX && plays[me].PosX <= plays[i].PosX+xThreshold {
-				fmt.Println("X pass")
 				if plays[me].PosY >= plays[i].PosY && plays[me].PosY <= plays[i].PosY+yThreshold {
-					fmt.Println("Y pass")
 					if plays[me].Angle >= plays[i].Angle && plays[me].Angle <= plays[i].Angle+180 {
-						fmt.Println("A pass")
 						return plays[i].Name, plays[i].Avater
 					}
 				}
