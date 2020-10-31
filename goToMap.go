@@ -284,11 +284,16 @@ func sendAct(winIp string, act int) {
 	i := 0
 	for client, _ := range ActiveClients {
 		cIp := fmt.Sprintf("%s", client.clientIP)
-		if winIp == cIp && actClient[i] != act {
+		// if winIp == cIp && actClient[i] != act {
+		// 	if err := client.websocket.WriteJSON(responseData{Command: "message", Data: actions[(act - 1)].DATA}); err != nil {
+		// 		fmt.Println(err)
+		// 	}
+		// 	actClient[i] = act
+		// }
+		if winIp == cIp {
 			if err := client.websocket.WriteJSON(responseData{Command: "message", Data: actions[(act - 1)].DATA}); err != nil {
 				fmt.Println(err)
 			}
-			actClient[i] = act
 		}
 		i = i + 1
 	}
@@ -488,30 +493,48 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 			} else {
 				if len(m.Data) > 0 {
 					act := actCheck(m.Data)
+					fmt.Printf("act: ")
+					fmt.Println(act)
 					if act > 0 && endFlag == false {
 						sendAct(req.RemoteAddr, act)
+					} else {
+						stra, strb := disAvater(req.RemoteAddr)
+						fmt.Println("dis: ", stra, strb)
+						if len(stra) > 0 && len(strb) > 0 {
+							if err = conn.WriteJSON(responseData{Command: "message", Data: "avater;" + stra + ";" + strb}); err != nil {
+								fmt.Println(err)
+							}
+						}
 					}
-					updateStat(req.RemoteAddr, m.Data)
-				}
-
-				stra, strb := disAvater(req.RemoteAddr)
-				fmt.Println("dis: ", stra, strb)
-				if len(stra) > 0 && len(strb) > 0 {
-					if err = conn.WriteJSON(responseData{Command: "message", Data: "avater;" + stra + ";" + strb}); err != nil {
-						fmt.Println(err)
-					}
+					updateStatSwitch(req.RemoteAddr, m.Data)
 				}
 			}
 		}
 	}
 }
 
-func updateStat(cIp, strs string) {
+func updateStatSwitch(cIp, strs string) {
+	if strings.Index(strs, "https://www.google.co.jp/maps/") == 0 {
+		switch strings.Index(strs, "place") {
+		case -1:
+			updateStat(cIp, strs, true)
+		default:
+			updateStat(cIp, strs, false)
+		}
+	}
+}
+
+func updateStat(cIp, strs string, defaultFlag bool) {
 	for i := 0; i < len(plays); i++ {
 		if cIp == plays[i].IP {
 			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
 			stra := strings.Split(strs, "/")
-			strb := strings.Split(stra[4], ",")
+			var strb []string
+			if defaultFlag == true {
+				strb = strings.Split(stra[4], ",")
+			} else {
+				strb = strings.Split(stra[6], ",")
+			}
 			strc := strings.Replace(strb[0], "@", "", -1)
 			strd := strings.Replace(strb[4], "h", "", -1)
 
