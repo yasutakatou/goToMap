@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -30,7 +31,6 @@ var (
 	actions              []actionData
 	plays                []playersData
 	players              int
-	actClient            []int
 	ActiveClients        = make(map[ClientConn]int)
 	ActiveClientsRWMutex sync.RWMutex
 	BUFFERLIMIT          int = 1
@@ -46,7 +46,9 @@ type playersData struct {
 	Name   string
 	IP     string
 	Avater string
-	Pos    string
+	PosX   float64
+	PosY   float64
+	Angle  float64
 }
 
 type actionData struct {
@@ -116,6 +118,9 @@ func main() {
 			}
 		}()
 	}
+
+	//https://www.google.co.jp/maps/@35.6609576,139.7008684,3a,75y,43.91h,92.5t/data=!3m6!1e1!3m4!1s-b8q-XZc_J3cmM3BI_yPTw!2e0!7i16384!8i8192
+	//plays = append(plays, playersData{Name: "ava", IP: "192.168.0.220:80801", Avater: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Cynops_pyrrhogaster.jpg/250px-Cynops_pyrrhogaster.jpg", PosX: 35.6609576, PosY: 139.7008684, Angle: 43.91})
 
 	for {
 		_, ip, err := getIFandIP()
@@ -278,11 +283,10 @@ func sendAct(winIp string, act int) {
 	i := 0
 	for client, _ := range ActiveClients {
 		cIp := fmt.Sprintf("%s", client.clientIP)
-		if winIp == cIp && actClient[i] != act {
+		if winIp == cIp {
 			if err := client.websocket.WriteJSON(responseData{Command: "message", Data: actions[(act - 1)].DATA}); err != nil {
 				fmt.Println(err)
 			}
-			actClient[i] = act
 		}
 		i = i + 1
 	}
@@ -307,11 +311,9 @@ func sendTo(winIp, name, mess string) {
 	defer ActiveClientsRWMutex.RUnlock()
 
 	strs := nameToIP(name)
-	fmt.Println(strs)
 
 	for client, _ := range ActiveClients {
 		cIp := fmt.Sprintf("%s", client.clientIP)
-		fmt.Println(cIp)
 		if winIp != cIp && strs == cIp {
 			if err := client.websocket.WriteJSON(responseData{Command: "message", Data: IPToName(winIp) + ">\n" + mess}); err != nil {
 				fmt.Println(err)
@@ -404,7 +406,6 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 
 	client := conn.RemoteAddr()
 	sockCli := ClientConn{conn, client}
-	actClient = append(actClient, 0)
 	addClient(sockCli)
 
 	for {
@@ -441,9 +442,9 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 			strs := strings.Split(m.Data, ":")
 			actions = append(actions, actionData{ADDRESS: strs[0], DATA: strs[1]})
 		case "start":
-			if nameCheck(m.Data) == true {
-				plays = append(plays, playersData{Name: m.Data, IP: req.RemoteAddr, Avater: "", Pos: ""})
-				fmt.Println(plays)
+			strs := strings.Split(m.Data, ";")
+			if nameCheck(strs[0]) == true {
+				plays = append(plays, playersData{Name: strs[0], IP: req.RemoteAddr, Avater: strs[1], PosX: 0, PosY: 0, Angle: 0})
 				if len(games.PLAYER) < players {
 					if err = conn.WriteJSON(responseData{Command: "error", Data: "定員オーバーです"}); err != nil {
 						fmt.Println(err)
@@ -480,11 +481,99 @@ func serveWebSocket(wr http.ResponseWriter, req *http.Request) {
 					winOrLose(req.RemoteAddr)
 				}
 			} else {
-				act := actCheck(m.Data)
-				if act > 0 && endFlag == false {
-					sendAct(req.RemoteAddr, act)
+				if len(m.Data) > 0 {
+					act := actCheck(m.Data)
+					if act > 0 && endFlag == false {
+						sendAct(req.RemoteAddr, act)
+					} else {
+						stra, strb := disAvater(req.RemoteAddr)
+						fmt.Println("dis: ", stra, strb)
+						if len(stra) > 0 && len(strb) > 0 {
+							if err = conn.WriteJSON(responseData{Command: "message", Data: "avater;" + stra + ";" + strb}); err != nil {
+								fmt.Println(err)
+							}
+						}
+					}
+					updateStatSwitch(req.RemoteAddr, m.Data)
 				}
 			}
 		}
 	}
+}
+
+func updateStatSwitch(cIp, strs string) {
+	if strings.Index(strs, "https://www.google.co.jp/maps/") == 0 {
+		switch strings.Index(strs, "place") {
+		case -1:
+			updateStat(cIp, strs, true)
+		default:
+			updateStat(cIp, strs, false)
+		}
+	}
+}
+
+func updateStat(cIp, strs string, defaultFlag bool) {
+	for i := 0; i < len(plays); i++ {
+		if cIp == plays[i].IP {
+			//https://www.google.co.jp/maps/@35.5773926,139.6606327,3a,75y,44.37h,89.35t/data=!3m6!1e1!3m4!1sdzcafrQ_B8ZOJTChCd3A6Q!2e0!7i16384!8i8192?hl=ja
+			stra := strings.Split(strs, "/")
+			var strb []string
+			if defaultFlag == true {
+				strb = strings.Split(stra[4], ",")
+			} else {
+				strb = strings.Split(stra[6], ",")
+			}
+			strc := strings.Replace(strb[0], "@", "", -1)
+			strd := strings.Replace(strb[4], "h", "", -1)
+
+			fX, err := strconv.ParseFloat(strc, 64)
+			if err == nil {
+				plays[i].PosX = fX
+			}
+
+			fY, err := strconv.ParseFloat(strb[1], 64)
+			if err == nil {
+				plays[i].PosY = fY
+			}
+
+			fA, err := strconv.ParseFloat(strd, 64)
+			if err == nil {
+				plays[i].Angle = fA
+			}
+		}
+	}
+}
+
+func intPlays(cIp string) int {
+	for i := 0; i < len(plays); i++ {
+		if cIp == plays[i].IP {
+			return i + 1
+		}
+	}
+	return 0
+}
+
+func disAvater(cIp string) (string, string) {
+	xThreshold := 0.001
+	yThreshold := 0.00005
+
+	me := intPlays(cIp)
+	if me == 0 {
+		return "", ""
+	}
+
+	me = me - 1
+
+	for i := 0; i < len(plays); i++ {
+		if me != i {
+			if plays[me].PosX >= plays[i].PosX && plays[me].PosX <= plays[i].PosX+xThreshold {
+				if plays[me].PosY >= plays[i].PosY && plays[me].PosY <= plays[i].PosY+yThreshold {
+					if plays[me].Angle >= plays[i].Angle && plays[me].Angle <= plays[i].Angle+180 {
+						return plays[i].Name, plays[i].Avater
+					}
+				}
+			}
+		}
+	}
+	return "", ""
 }
